@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 //object는 코틀린 전역에서 하나만 존재하는 싱글톤 객체를 정의할 떄 사용,
 object RetrofitClient {
     //    서버의 기본 주소를 저장하는 상수
-    private const val BASE_URL = "https://172.30.1.41:8080/" // 여기에 실제 서버 주소 입력
+    private const val BASE_URL = "http://172.30.1.41:8080/" // 여기에 실제 서버 주소 입력
     // apiService는 ApiService타입의 변수 by lazy는 처음 사용할 때 한 번만 실행하고 저장되는 방식
     val apiService: ApiService by lazy {
         Retrofit.Builder()

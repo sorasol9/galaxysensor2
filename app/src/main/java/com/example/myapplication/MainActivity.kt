@@ -101,34 +101,36 @@ class MainActivity : ComponentActivity() {
         Log.d("HEALTH_SYNC", "fetchAndSend 실행됨")
         lifecycleScope.launch {
             try {
-                // 심박수 데이터 읽기
+                // 1️⃣ 심박수 데이터 읽기
                 val heartRateRecords = healthConnectManager.readHeartRates()
-                val heartRateData = heartRateRecords.map {
-                    val sample = it.samples.firstOrNull()
-                    HeartRateData(
-                        bpm = sample?.beatsPerMinute?.toDouble() ?: 0.0,
-                        time = sample?.time.toString()
-                    )
-                }
 
-                // 체온 데이터 읽기
+                // ✅ 가장 최신 샘플만 추출 (모든 samples 중 최신 시간 기준)
+                val latestSample = heartRateRecords
+                    .flatMap { it.samples }
+                    .maxByOrNull { it.time }
+
+                val heartRateData = listOf(
+                    HeartRateData(
+                        bpm = latestSample?.beatsPerMinute?.toDouble() ?: 0.0,
+                        time = latestSample?.time.toString()
+                    )
+                )
+
+                // 2️⃣ 체온 데이터 읽기 (이 부분은 그대로)
                 val bodyTempRecords = healthConnectManager.readBodyTemperature()
-                // 가장 최근 체온 데이터 가져오기 (여러 개가 있을 경우)
                 val latestBodyTemp = bodyTempRecords.lastOrNull()?.temperature?.inCelsius ?: 0.0
 
                 Log.d("HEALTH_SYNC", "심박수 데이터: ${heartRateData.size}개")
                 Log.d("HEALTH_SYNC", "체온 데이터: $latestBodyTemp°C")
 
-                // UI 업데이트를 위해 콜백 호출
+                // 3️⃣ UI에 최신 데이터 전달
                 onDataFetched(heartRateData, latestBodyTemp)
 
-                // 서버로 전송할 데이터 구성
+                // 4️⃣ 서버로 전송
                 val healthData = HealthData(
                     heartRateData = heartRateData,
                     bodyTemperature = latestBodyTemp
                 )
-
-                // 서버로 전송
                 RetrofitClient.apiService.sendHealthData(healthData)
 
             } catch (e: Exception) {

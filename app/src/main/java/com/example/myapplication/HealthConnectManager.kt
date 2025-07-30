@@ -15,6 +15,7 @@ import retrofit2.http.Body
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 class HealthConnectManager(private val context: Context) {
     //    생성자에서 Context타입의 값을 받아서 클래스안에 context라는 이름으로 읽기 전용(private val)로 저장함(val은 변경할 수 없는 값)
@@ -35,13 +36,14 @@ class HealthConnectManager(private val context: Context) {
 
     // suspend->코루틴(비동기처리)에서 사용할 수 있는 함수 , fun은 함수 선언 , :List<HeartRateRecord>는 반환 타입
     suspend fun readHeartRates(): List<HeartRateRecord> {
-        val now = Instant.now() //현재시간
-        val todayStart = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant() // 오늘 자정 시간 기준
+        val now = Instant.now()
+        val oneMinuteAgo = now.minus(30, ChronoUnit.MINUTES) // 최근 1분 간
 
         val request = ReadRecordsRequest(
-            recordType = HeartRateRecord::class, //어떤 종류의 기록을 읽을건지(HeartRateRecord)
-            timeRangeFilter = TimeRangeFilter.between(todayStart, now) //어느 시간 범위를 읽을 건지->여기선 자정부터 현재
+            recordType = HeartRateRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(oneMinuteAgo, now)
         )
+
         return healthConnectClient.readRecords(request).records//요청객체를 사용해서 위에서 만든request를 주고 records를 반환받음
     } //즉 이 앱이 readHeartRates함수를 호출하면, List<HeartRateRecord>에 데이터가 담기는 것\
 
